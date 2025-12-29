@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CIMAER | Chefe de Seção v3.9</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;font-family:'Roboto',sans-serif;}
+    body{background:#f0f7ff;color:#002b5c;padding:20px;min-height:100vh;}
+    .container{max-width:1600px;margin:auto;background:white;border-radius:16px;box-shadow:0 10px 40px rgba(0,43,92,0.15);overflow:hidden;}
+    header{background:linear-gradient(135deg,#002b5c,#003b7c);color:white;padding:30px;text-align:center;position:relative;}
+    header h1{font-size:2.4rem;font-weight:700;}
+    header .versao{position:absolute;bottom:8px;right:15px;font-size:0.9rem;opacity:0.9;}
+    .tabs{display:flex;background:#002b5c;}
+    .tab{flex:1;padding:16px;text-align:center;color:white;cursor:pointer;font-weight:500;transition:0.3s;}
+    .tab.active{background:#00aaff;}
+    .tab:hover:not(.active){background:#003b7c;}
+    .content{padding:30px;display:none;}
+    .content.active{display:block;}
+    #contadorUrgente,#contadorAguardando{padding:18px;margin:20px 0;border-radius:12px;font-size:1.3rem;font-weight:bold;text-align:center;color:white;}
+    #contadorUrgente{background:#d32f2f;}
+    #contadorAguardando{background:#ff8f00;margin-top:10px;}
+    .top-bar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px;margin-bottom:20px;}
+    #buscaSigad{width:260px;padding:12px;font-size:16px;border-radius:8px;border:1px solid #002b5c;}
+    .btn-ajuda{background:#455a64;color:white;padding:12px 20px;border:none;border-radius:8px;cursor:pointer;}
+    .export-buttons{margin:20px 0;text-align:right;}
+    .btn-export{padding:10px 20px;margin-left:10px;border:none;border-radius:8px;cursor:pointer;font-weight:500;color:white;}
+    .btn-pdf{background:#d32f2f;}.btn-excel{background:#1e7e34;}.btn-backup{background:#607d8b;}
+    .btn-restore{background:#455a64;position:relative;overflow:hidden;}
+    .btn-restore input{position:absolute;opacity:0;width:100%;height:100%;cursor:pointer;left:0;top:0;}
+    .form-sigad{margin-bottom:25px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;}
+    .form-sigad input,.form-sigad select,.form-sigad button{padding:10px;font-size:16px;border-radius:8px;border:1px solid #ccc;}
+    .form-sigad button{background:#002b5c;color:white;border:none;min-width:160px;cursor:pointer;}
+    #campoPrazoManual,#campoLink{gap:10px;background:#f0f7ff;padding:12px;border-radius:8px;align-items:center;flex-wrap:wrap;display:none;}
+    #campoLink{background:#e8f5e8;display:flex !important;}
+    table{width:100%;border-collapse:collapse;margin-top:20px;}
+    th,td{border:1px solid #ddd;padding:10px;text-align:center;font-size:14px;}
+    th{background:#002b5c;color:white;cursor:pointer;position:relative;}
+    th.sorted-asc::after{content:" Up";font-size:0.8em;}
+    th.sorted-desc::after{content:" Down";font-size:0.8em;}
+    .vencido{background:#ffcccc !important;font-weight:bold;}
+    .quase{background:#fff8c4 !important;font-weight:bold;}
+    .ok{background:#d4edda;}
+    .concluido{background:#c8e6c9 !important;}
+    .aguardando{background:#fff3e0 !important;font-weight:bold;}
+    .link-icon{color:#0066cc;cursor:pointer;font-size:18px;}
+    .link-icon:hover{color:#004499;}
+    .agenda-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px;margin-bottom:15px;}
+    .btn-novo{background:#002b5c;color:white;padding:12px 24px;border:none;border-radius:8px;cursor:pointer;}
+    .checkbox-agenda label{cursor:pointer;font-size:15px;}
+    .modal{display:none;position:fixed;z-index:1000;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.6);justify-content:center;align-items:center;}
+    .modal-content{background:white;padding:30px;width:90%;max-width:700px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.3);position:relative;}
+    .close{color:#aaa;position:absolute;top:10px;right:20px;font-size:32px;font-weight:bold;cursor:pointer;}
+    .close:hover{color:#000;}
+    #calendar{margin-top:20px;background:white;padding:15px;border-radius:8px;min-height:600px;}
+    .fc-event{cursor:pointer !important;}
+    .fc-event.sigad-event{background:#e91e63 !important;border-color:#c2185b !important;color:white !important;}
+    .fc-event.sigad-concluido{background:#9e9e9e !important;border-color:#616161 !important;color:#ccc !important;text-decoration:line-throughput !important;}
+    .footer{text-align:center;padding:20px;background:#f9f9f9;color:#555;font-size:0.9rem;border-top:1px solid #eee;}
+    .legenda{margin:15px 0;padding:12px;background:#f5f9ff;border-radius:8px;font-size:0.9rem;}
+    @media (max-width:768px){
+      table,thead,tbody,th,td,tr{display:block;}
+      thead tr{position:absolute;top:-9999px;left:-9999px;}
+      tr{border:1px solid #ccc;margin-bottom:15px;border-radius:8px;background:#fafafa;}
+      td{border:none;border-bottom:1px solid #eee;position:relative;padding-left:50%!important;text-align:right;}
+      td:before{position:absolute;top:12px;left:12px;width:45%;padding-right:10px;white-space:nowrap;text-align:left;font-weight:bold;content:attr(data-label);}
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>CIMAER - Controle de Documentos e Agenda</h1>
+    <div class="versao"> • v3.9 • </div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="sigad">Controle de Documentos</div>
+    <div class="tab" data-tab="agenda">Agenda Completa</div>
+  </div>
+
+  <!-- ABA SIGAD -->
+  <div id="sigad" class="content active">
+    <h2>Controle de Documentos do SIGADAER</h2>
+    <div id="contadorUrgente">Carregando...</div>
+    <div id="contadorAguardando">Carregando...</div>
+
+    <div class="top-bar">
+      <input type="text" id="buscaSigad" placeholder="Buscar SIGAD ou assunto...">
+      <button class="btn-ajuda" onclick="document.getElementById('modalAjuda').style.display='flex'">Ajuda / Backup</button>
+    </div>
+
+    <div style="text-align:right;margin-bottom:10px;color:#555;">
+      Total de documentos: <strong id="totalDocs">0</strong>
+    </div>
+
+    <div class="export-buttons">
+      <button class="btn-export btn-pdf" onclick="exportarSigadPDF()">Exportar PDF</button>
+      <button class="btn-export btn-excel" onclick="exportarSigadExcel()">Exportar Excel</button>
+      <button class="btn-export btn-backup" onclick="backupDados()">Backup Completo</button>
+      <button class="btn-export btn-restore">Restaurar <input type="file" id="restoreFile" onchange="restaurarDados(event)"></button>
+    </div>
+
+    <div class="form-sigad">
+      <input type="text" id="sigadInput" placeholder="Número SIGAD (ex: 001234)">
+      <select id="tipoDoc" onchange="mostrarCampoPrazo()">
+        <option value="enviado">Enviado</option>
+        <option value="recebido">Recebido</option>
+      </select>
+      <input type="date" id="dataDoc">
+      <input type="text" id="assuntoDoc" placeholder="Assunto (opcional)" style="width:300px;">
+      <div id="campoPrazoManual">
+        <label>Prazo Final:</label>
+        <input type="date" id="prazoManual">
+        <small>(vazio = 10 dias úteis)</small>
+      </div>
+      <div id="campoLink">
+        <label>Link:</label>
+        <input type="url" id="linkDoc" placeholder="Link do documento..." style="flex:1;min-width:300px;">
+      </div>
+      <button onclick="adicionarSigad()">Adicionar Documento</button>
+    </div>
+
+    <table id="tabelaSigad">
+      <thead>
+        <tr>
+          <th data-col="sigad">SIGAD</th>
+          <th data-col="tipo">Tipo</th>
+          <th data-col="data">Entrada</th>
+          <th data-col="assunto">Assunto</th>
+          <th data-col="prazo">Prazo</th>
+          <th>Status</th>
+          <th data-col="situacao">Situação</th>
+          <th>Link</th>
+          <th>Ação</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- ABA AGENDA -->
+  <div id="agenda" class="content">
+    <div class="agenda-header">
+      <h2>Agenda Completa</h2>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+        <button class="btn-novo" onclick="abrirModalEvento()">+ Novo Evento</button>
+        <div class="checkbox-agenda">
+          <label><input type="checkbox" id="mostrarSigads" checked onchange="atualizarSigadsNoCalendario()"> Mostrar SIGADs</label>
+        </div>
+        <button class="btn-export btn-pdf" onclick="exportarPeriodoPDF()">Exportar Mês Selecionado</button>
+        <button class="btn-export btn-pdf" onclick="exportarSemanaPDF()">Exportar Semana Atual</button>
+      </div>
+    </div>
+    <div id="calendar"></div>
+  </div>
+
+  <div class="footer">CIMAER v3.9 • Última Atualização: 27/11/2025</div>
+</div>
+
+<!-- MODAL EVENTO -->
+<div id="modalEvento" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="fecharModalEvento()">X</span>
+    <h3 id="tituloModal">Novo Evento</h3>
+    <div style="display:flex;flex-direction:column;gap:14px;margin-top:15px;">
+      <input type="text" id="tituloEvento" placeholder="Título do evento">
+      <select id="tipoEvento">
+        <option value="ris aer">Serviço RISAER</option>
+        <option value="ferias">Férias</option>
+        <option value="dispensa_medica">Dispensa Médica</option>
+        <option value="dispensa_chefe">Dispensa do Chefe</option>
+        <option value="operacional">Serviço Operacional</option>
+        <option value="missao">Missão</option>
+        <option value="curso">Curso</option>
+        <option value="reuniao">Reunião</option>
+        <option value="evento">Evento</option>
+      </select>
+      <div><label>Início:</label><input type="date" id="dataInicio"></div>
+      <div><label>Fim (opcional):</label><input type="date" id="dataFim"></div>
+      <textarea id="descricaoEvento" rows="3" placeholder="Descrição (opcional)"></textarea>
+      <div style="text-align:right;margin-top:10px;">
+        <button class="btn-export btn-pdf" onclick="salvarEvento()">Salvar</button>
+        <button id="btnExcluir" style="display:none;background:#d32f2f;margin-left:10px;" onclick="excluirEvento()">Excluir</button>
+        <button style="background:#666;margin-left:10px;" onclick="fecharModalEvento()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL AJUDA -->
+<div id="modalAjuda" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="this.closest('.modal').style.display='none'">X</span>
+    <h2 style="color:#002b5c;">CIMAER v3.9 – Guia Rápido</h2>
+    <ol style="padding-left:32px;line-height:1.0;font-size:1.05rem;">
+      <li><strong>Trocar de aba</strong><br>Clique em <strong>Controle de Documentos</strong> ou <strong>Agenda Completa</strong></li><br>
+      <li><strong>Adicionar SIGAD</strong><br>Preencha número, tipo, data → <strong>Adicionar Documento</strong></li><br>
+      <li><strong>Marcar situação</strong><br>Botões <span style="background:#ff8f00;padding:2px 8px;border-radius:2px;color:white;">Aguardando</span> ou <span style="background:#2e7d32;padding:2px 8px;border-radius:2px;color:white;">Concluir</span></li><br>
+      <li><strong>Criar evento</strong><br>Botão azul <strong>+ Novo Evento</strong> ou clique no dia</li><br>
+      <li><strong>Editar/Excluir evento</strong><br>Clique no retângulo colorido do evento</li><br>
+      <li><strong>Navegar no calendário</strong><br>Botões Dia | Semana | Mês • setas left right • botão <strong>Hoje</strong></li><br>
+      <li><strong>Exportar agenda (NOVO!)</strong><br>
+         • <strong>Exportar Mês Selecionado</strong> → só o que está na tela<br>
+         • <strong>Exportar Semana Atual</strong> → muda para semana e baixa automaticamente</li><br>
+      <li><strong>Exportar documentos</strong><br>Botões PDF ou Excel na aba Controle de Documentos</li><br>
+      <li><strong>Backup semanal (OBRIGATÓRIO)</strong><br>Clique em <strong>Ajuda / Backup</strong> ou <strong>Backup Completo</strong></li><br>
+      <li><strong>Dica</strong><br>Tecla <kbd>ESC</kbd> fecha qualquer janela</li>
+    </ol>
+    <div style="text-align:center;margin-top:30px;">
+      <button onclick="this.closest('.modal').style.display='none'" style="background:#002b5c;color:white;padding:14px 40px;border:none;border-radius:8px;cursor:pointer;font-size:1.1rem;">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/pt-br.js"></script>
+
+<script>
+// ====================================
+// CIMAER v3.9 – COMPLETO E PRONTO
+// ====================================
+
+const STORAGE_SIGAD = "cimaer_sigad";
+const STORAGE_EVENTOS = "cimaer_eventos";
+
+const CORES_EVENTOS = {
+  "ris aer": "#d32f2f", ferias: "#ff8f00", dispensa_medica: "#8e24aa", dispensa_chefe: "#ffb300",
+  operacional: "#1e88e5", missao: "#880e4f", curso: "#43a047", reuniao: "#e65100", evento: "#1565c0",
+  SIGAD: "#e91e63", concluido: "#9e9e9e"
+};
+
+const feriados = ["2025-01-01","2025-02-17","2025-02-18","2025-03-03","2025-04-18","2025-04-21","2025-05-01","2025-06-05","2025-09-07","2025-10-12","2025-11-02","2025-11-15","2025-11-20","2025-12-25","2026-01-01","2026-03-02","2026-03-03","2026-03-04","2026-04-03","2026-04-21","2026-06-11","2026-09-07","2026-10-12","2026-11-02","2026-11-15","2026-11-20","2026-12-25","2027-01-01","2027-02-15","2027-02-16","2027-04-02","2027-04-16","2027-05-01","2027-06-03","2027-09-07","2027-10-12","2027-11-02","2027-11-15","2027-11-20","2027-12-25","2028-01-01","2028-02-28","2028-02-29","2028-03-17","2028-04-21","2028-05-01","2028-05-21","2028-09-07","2028-10-12","2028-11-02","2028-11-15","2028-11-20","2028-12-25"];
+
+function hojeIso() {
+  const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().split('T')[0];
+}
+function isoParaBr(iso) { if (!iso) return ""; const [a,m,d] = iso.split("-"); return `${d}/${m}/${a}`; }
+function adicionarDiasUteis(dataIso, dias) {
+  let d = new Date(dataIso); let count = 0;
+  while (count < dias) {
+    d.setDate(d.getDate() + 1);
+    const s = d.toISOString().split("T")[0];
+    const fimSemana = d.getDay() === 0 || d.getDay() === 6;
+    const feriado = feriados.includes(s);
+    if (!fimSemana && !feriado) count++;
+  }
+  return d.toISOString().split("T")[0];
+}
+
+let calendar, calendarInitialized = false;
+let eventoAtual = null;
+let ordemColuna = null, ordemAsc = true;
+
+/* ABAS */
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".tab,.content").forEach(el => el.classList.remove("active"));
+    tab.classList.add("active");
+    document.getElementById(tab.dataset.tab).classList.add("active");
+    if (tab.dataset.tab === "agenda" && !calendarInitialized) {
+      renderizarCalendar(); calendarInitialized = true;
+    }
+  });
+});
+
+/* SIGAD */
+function mostrarCampoPrazo() {
+  document.getElementById("campoPrazoManual").style.display = 
+    document.getElementById("tipoDoc").value === "recebido" ? "flex" : "none";
+}
+function salvarDados(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
+function carregarDados(k) { return JSON.parse(localStorage.getItem(k) || "[]"); }
+
+function adicionarSigad() {
+  const sigad = document.getElementById("sigadInput").value.trim().toUpperCase();
+  const tipo = document.getElementById("tipoDoc").value;
+  const dataInput = document.getElementById("dataDoc").value;
+  const assunto = document.getElementById("assuntoDoc").value.trim();
+  const link = document.getElementById("linkDoc").value.trim();
+  const prazoManualInput = document.getElementById("prazoManual").value;
+
+  if (!sigad || !dataInput) return alert("Preencha SIGAD e data!");
+  const data = dataInput;
+  const prazo = tipo === "recebido" ? (prazoManualInput || adicionarDiasUteis(data, 10)) : null;
+
+  let docs = carregarDados(STORAGE_SIGAD);
+  if (docs.some(d => d.sigad === sigad)) return alert(`O SIGAD ${sigad} já existe!`);
+  docs.push({ sigad, tipo, data, assunto, prazo, situacao: "pendente", link });
+  salvarDados(STORAGE_SIGAD, docs);
+  limparFormularioSigad(); atualizarTabela();
+  if (calendar) atualizarSigadsNoCalendario();
+}
+function limparFormularioSigad() {
+  ["sigadInput","dataDoc","assuntoDoc","linkDoc","prazoManual"].forEach(id => document.getElementById(id).value = "");
+}
+
+/* TABELA SIGAD */
+function atualizarTabela() {
+  const tbody = document.querySelector("#tabelaSigad tbody"); tbody.innerHTML = "";
+  let docs = carregarDados(STORAGE_SIGAD);
+  const busca = document.getElementById("buscaSigad").value.toLowerCase();
+  if (busca) docs = docs.filter(d => d.sigad.toLowerCase().includes(busca) || (d.assunto||"").toLowerCase().includes(busca));
+
+  if (ordemColuna) {
+    docs.sort((a,b) => {
+      let x = a[ordemColuna] || "", y = b[ordemColuna] || "";
+      if (ordemColuna === "data" || ordemColuna === "prazo") { x = x || "9999-99-99"; y = y || "9999-99-99"; }
+      return ordemAsc ? (x < y ? -1 : x > y ? 1 : 0) : (x > y ? -1 : x < y ? 1 : 0);
+    });
+  }
+
+  document.getElementById("totalDocs").textContent = docs.length;
+  document.querySelectorAll("#tabelaSigad th").forEach(th => th.classList.remove("sorted-asc","sorted-desc"));
+  if (ordemColuna) document.querySelector(`#tabelaSigad th[data-col="${ordemColuna}"]`).classList.add(ordemAsc ? "sorted-asc" : "sorted-desc");
+
+  let urgentes = 0, aguardandoCount = 0;
+  const hoje = hojeIso();
+
+  docs.forEach(d => {
+    const tr = document.createElement("tr");
+    let status = "", classe = "ok";
+
+    if (d.prazo) {
+      if (d.situacao === "concluido") { status = "Concluído"; classe = "concluido"; }
+      else if (d.situacao === "aguardando") { status = "Aguardando resposta"; classe = "aguardando"; aguardandoCount++; }
+      else if (d.prazo < hoje) { status = "Vencido"; classe = "vencido"; urgentes++; }
+      else if (d.prazo === hoje) { status = "Vence hoje"; classe = "quase"; urgentes++; }
+      else { status = "Em prazo"; classe = "ok"; }
+    } else {
+      status = d.situacao === "concluido" ? "Concluído" : d.situacao === "aguardando" ? "Aguardando" : "Sem prazo";
+      classe = d.situacao === "concluido" ? "concluido" : d.situacao === "aguardando" ? "aguardando" : "ok";
+      if (d.situacao === "aguardando") aguardandoCount++;
+    }
+
+    tr.className = classe;
+    tr.innerHTML = `
+      <td data-label="SIGAD">${d.sigad}</td>
+      <td data-label="Tipo">${d.tipo}</td>
+      <td data-label="Entrada">${isoParaBr(d.data)}</td>
+      <td data-label="Assunto">${d.assunto || ""}</td>
+      <td data-label="Prazo">${d.prazo ? isoParaBr(d.prazo) : ""}</td>
+      <td>${status}</td>
+      <td data-label="Situação" style="font-weight:bold;">${d.situacao === "concluido" ? "Concluído" : d.situacao === "aguardando" ? "Aguardando" : "Pendente"}</td>
+      <td data-label="Link">${d.link ? `<a href="${d.link}" target="_blank" class="link-icon"><i class="fas fa-link"></i></a>` : ""}</td>
+      <td style="white-space:nowrap;">
+        ${d.situacao !== "concluido" ? `<button onclick="marcarAguardando('${d.sigad}')" style="background:#ff8f00;color:white;border:none;padding:6px 10px;border-radius:4px;font-size:12px;cursor:pointer;margin:2px;">Aguardando</button>` : ""}
+        ${d.situacao !== "concluido" ? `<button onclick="concluirSigad('${d.sigad}')" style="background:#2e7d32;color:white;border:none;padding:6px 10px;border-radius:4px;font-size:12px;cursor:pointer;margin:2px;">Concluir</button>` : ""}
+        <button onclick="excluirSigad('${d.sigad}')" style="background:#d32f2f;color:white;border:none;padding:6px 10px;border-radius:4px;font-size:12px;cursor:pointer;margin:2px;">Excluir</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  const cUrg = document.getElementById("contadorUrgente");
+  const cAgu = document.getElementById("contadorAguardando");
+  cUrg.textContent = urgentes === 0 ? "Nenhum documento urgente" : `${urgentes} documento${urgentes>1?'s':''} urgente${urgentes>1?'s':''}!`;
+  cUrg.style.background = urgentes === 0 ? "#4caf50" : "#d32f2f";
+  cAgu.textContent = aguardandoCount === 0 ? "Nenhum aguardando resposta" : `${aguardandoCount} aguardando resposta`;
+  cAgu.style.display = aguardandoCount === 0 ? "none" : "block";
+}
+
+function marcarAguardando(sigad) { if(confirm(`Marcar SIGAD ${sigad} como "Aguardando Resposta"?`)) { let docs=carregarDados(STORAGE_SIGAD); docs=docs.map(d=>d.sigad===sigad?{...d,situacao:"aguardando"}:d); salvarDados(STORAGE_SIGAD,docs); atualizarTabela(); if(calendar) atualizarSigadsNoCalendario(); }}
+function concluirSigad(sigad) { let docs=carregarDados(STORAGE_SIGAD); docs=docs.map(d=>d.sigad===sigad?{...d,situacao:"concluido"}:d); salvarDados(STORAGE_SIGAD,docs); atualizarTabela(); if(calendar) atualizarSigadsNoCalendario(); }
+function excluirSigad(sigad) { if(confirm("Excluir permanentemente o SIGAD "+sigad+"?")) { let docs=carregarDados(STORAGE_SIGAD); docs=docs.filter(d=>d.sigad!==sigad); salvarDados(STORAGE_SIGAD,docs); atualizarTabela(); if(calendar) atualizarSigadsNoCalendario(); }}
+
+/* ORDENAÇÃO E BUSCA */
+document.getElementById("buscaSigad").addEventListener("input", atualizarTabela);
+document.querySelectorAll("#tabelaSigad th[data-col]").forEach(th => {
+  th.addEventListener("click", () => {
+    const col = th.dataset.col;
+    if (ordemColuna === col) ordemAsc = !ordemAsc;
+    else { ordemColuna = col; ordemAsc = true; }
+    atualizarTabela();
+  });
+});
+
+/* CALENDÁRIO */
+function renderizarCalendar() {
+  calendar = new FullCalendar.Calendar(document.getElementById("calendar"), {
+    initialView: 'dayGridMonth',
+    locale: 'pt-br',
+    height: 'auto',
+    headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
+    events: [...carregarDados(STORAGE_EVENTOS), ...gerarEventosSigad()],
+    eventDidMount: function(info) {
+      if (!info.event.extendedProps.isSigad) {
+        const tipo = info.event.extendedProps.tipo || "evento";
+        const ponto = document.createElement('span');
+        ponto.style.cssText = `display:inline-block;width:10px;height:10px;background:${CORES_EVENTOS[tipo]};border-radius:50%;margin-right:6px;vertical-align:middle;`;
+        info.el.querySelector('.fc-event-title').prepend(ponto);
+      }
+    },
+    eventClick: info => {
+      if (info.event.extendedProps.isSigad) {
+        const sit = info.event.extendedProps.situacao === "concluido" ? "Concluído" : info.event.extendedProps.situacao === "aguardando" ? "Aguardando" : "Pendente";
+        alert(`SIGAD: ${info.event.title}\nAssunto: ${info.event.extendedProps.assunto || "Sem assunto"}\nSituação: ${sit}`);
+      } else {
+        abrirModalEvento(info.event);
+      }
+    }
+  });
+  calendar.render();
+  adicionarLegenda();
+}
+
+function gerarEventosSigad() {
+  if (!document.getElementById("mostrarSigads").checked) return [];
+  return carregarDados(STORAGE_SIGAD).filter(d => d.prazo).map(d => ({
+    title: `SIGAD ${d.sigad}`, start: d.prazo, allDay: true,
+    backgroundColor: d.situacao === "concluido" ? CORES_EVENTOS.concluido : CORES_EVENTOS.SIGAD,
+    borderColor: d.situacao === "concluido" ? CORES_EVENTOS.concluido : CORES_EVENTOS.SIGAD,
+    textColor: d.situacao === "concluido" ? "#ccc" : "white",
+    extendedProps: { isSigad: true, assunto: d.assunto, situacao: d.situacao }
+  }));
+}
+
+function atualizarSigadsNoCalendario() {
+  if (!calendar) return;
+  calendar.getEvents().filter(e => e.extendedProps?.isSigad).forEach(e => e.remove());
+  gerarEventosSigad().forEach(ev => calendar.addEvent(ev));
+}
+
+function adicionarLegenda() {
+  if (document.querySelector(".legenda")) return;
+  const legendas = [
+    {tipo:"ris aer", texto:"Serviço RISAER"}, {tipo:"ferias", texto:"Férias"},
+    {tipo:"dispensa_medica", texto:"Dispensa Médica"}, {tipo:"dispensa_chefe", texto:"Dispensa do Chefe"},
+    {tipo:"operacional", texto:"Serviço Operacional"}, {tipo:"missao", texto:"Missão"},
+    {tipo:"curso", texto:"Curso"}, {tipo:"reuniao", texto:"Reunião"}, {tipo:"evento", texto:"Evento"},
+    {tipo:"SIGAD", texto:"Prazo SIGAD"}
+  ];
+  const div = document.createElement("div"); div.className = "legenda";
+  div.innerHTML = "<strong>Legenda de cores:</strong> " + legendas.map(l =>
+    `<span style="margin-right:15px;"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${CORES_EVENTOS[l.tipo]};margin-right:5px;"></span>${l.texto}</span>`
+  ).join("");
+  document.querySelector(".agenda-header").appendChild(div);
+}
+
+/* EVENTOS */
+function abrirModalEvento(ev = null) {
+  eventoAtual = ev;
+  document.getElementById("modalEvento").style.display = "flex";
+  if (ev) {
+    document.getElementById("tituloModal").textContent = "Editar Evento";
+    document.getElementById("tituloEvento").value = ev.title;
+    document.getElementById("tipoEvento").value = ev.extendedProps.tipo || "ris aer";
+    document.getElementById("descricaoEvento").value = ev.extendedProps.descricao || "";
+    document.getElementById("dataInicio").value = ev.startStr.split("T")[0];
+    document.getElementById("dataFim").value = ev.end ? new Date(ev.end.getTime() - 86400000).toISOString().split("T")[0] : "";
+    document.getElementById("btnExcluir").style.display = "inline-block";
+  } else {
+    document.getElementById("tituloModal").textContent = "Novo Evento";
+    ["tituloEvento","dataInicio","dataFim","descricaoEvento"].forEach(id => document.getElementById(id).value = "");
+    document.getElementById("tipoEvento").value = "ris aer";
+    document.getElementById("btnExcluir").style.display = "none";
+  }
+}
+function fecharModalEvento() { document.getElementById("modalEvento").style.display = "none"; eventoAtual = null; }
+
+function salvarEvento() {
+  const titulo = document.getElementById("tituloEvento").value.trim();
+  const inicio = document.getElementById("dataInicio").value;
+  if (!titulo || !inicio) return alert("Preencha título e data de início!");
+
+  const tipo = document.getElementById("tipoEvento").value;
+  let fim = null;
+  const fimInput = document.getElementById("dataFim").value;
+  if (fimInput) { const d = new Date(fimInput); d.setDate(d.getDate() + 1); fim = d.toISOString().split("T")[0]; }
+
+  const evObj = {
+    title: titulo, start: inicio, end: fim,
+    backgroundColor: CORES_EVENTOS[tipo], borderColor: CORES_EVENTOS[tipo], textColor: "white",
+    extendedProps: { tipo: tipo, descricao: document.getElementById("descricaoEvento").value.trim() }
+  };
+
+  if (eventoAtual) {
+    eventoAtual.setProp("title", titulo); eventoAtual.setStart(inicio); eventoAtual.setEnd(fim);
+    eventoAtual.setExtendedProp("tipo", tipo); eventoAtual.setExtendedProp("descricao", evObj.extendedProps.descricao);
+    eventoAtual.setProp("backgroundColor", CORES_EVENTOS[tipo]); eventoAtual.setProp("borderColor", CORES_EVENTOS[tipo]);
+  } else {
+    calendar.addEvent(evObj);
+  }
+
+  salvarDados(STORAGE_EVENTOS, calendar.getEvents().filter(e => !e.extendedProps?.isSigad).map(e => ({
+    title: e.title, start: e.startStr.split("T")[0], end: e.end ? e.endStr.split("T")[0] : null,
+    backgroundColor: e.backgroundColor, borderColor: e.borderColor, extendedProps: e.extendedProps
+  })));
+
+  fecharModalEvento();
+}
+
+function excluirEvento() {
+  if (eventoAtual && confirm("Excluir este evento permanentemente?")) {
+    eventoAtual.remove();
+    salvarDados(STORAGE_EVENTOS, calendar.getEvents().filter(e => !e.extendedProps?.isSigad).map(e => ({
+      title: e.title, start: e.startStr.split("T")[0], end: e.end ? e.endStr.split("T")[0] : null,
+      backgroundColor: e.backgroundColor, borderColor: e.borderColor, extendedProps: e.extendedProps
+    })));
+    fecharModalEvento();
+  }
+}
+
+/* EXPORTAÇÕES */
+function exportarPeriodoPDF() {
+  if (!calendar) return alert("Abra a aba Agenda primeiro!");
+  const view = calendar.view;
+  const inicio = view.activeStart.toISOString().split("T")[0];
+  const fim = view.activeEnd.toISOString().split("T")[0];
+
+  const incluirSigads = document.getElementById("mostrarSigads").checked;
+  const eventos = calendar.getEvents().filter(e => {
+    if (!incluirSigads && e.extendedProps?.isSigad) return false;
+    const start = e.start ? e.start.toISOString().split("T")[0] : "";
+    const end = e.end ? new Date(e.end.getTime() - 86400000).toISOString().split("T")[0] : start;
+    return (start >= inicio && start < fim) || (end >= inicio && end < fim);
+  });
+
+  if (eventos.length === 0) return alert("Nenhum evento no período visível.");
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF('l', 'mm', 'a4');
+  doc.setFillColor(0,43,92); doc.rect(0,0,297,25,'F');
+  doc.setTextColor(255,255,255); doc.setFontSize(20);
+  doc.text(`Agenda CIMAER - ${view.title}`, 148.5, 16, {align:"center"});
+
+  const rows = eventos.map(e => [
+    e.title,
+    isoParaBr(e.start.toISOString().split("T")[0]),
+    e.end ? isoParaBr(new Date(e.end.getTime() - 86400000).toISOString().split("T")[0]) : isoParaBr(e.start.toISOString().split("T")[0]),
+    e.extendedProps?.tipo ? {
+      "ris aer":"Serviço RISAER", ferias:"Férias", dispensa_medica:"Dispensa Médica", dispensa_chefe:"Dispensa do Chefe",
+      operacional:"Serviço Operacional", missao:"Missão", curso:"Curso", reuniao:"Reunião", evento:"Evento"
+    }[e.extendedProps.tipo] || "Evento" : "SIGAD",
+    (e.extendedProps?.descricao || e.extendedProps?.assunto || "").substring(0,120)
+  ]);
+
+  doc.autoTable({head: [["Título","Início","Fim","Tipo","Descrição"]], body: rows, startY: 30, theme: 'grid', styles: { fontSize: 10 }, columnStyles: { 4: { cellWidth: 80 } }});
+  doc.save(`CIMAER_Agenda_${view.title.replace(/[^a-zA-Z0-9]/g,"-")}_${hojeIso()}.pdf`);
+}
+
+function exportarSemanaPDF() {
+  if (!calendar) return alert("Abra a aba Agenda primeiro!");
+  if (calendar.view.type !== "timeGridWeek") {
+    if (confirm("Você não está na visualização de semana.\nDeseja mudar para a semana atual agora?")) {
+      calendar.changeView('timeGridWeek');
+      setTimeout(exportarPeriodoPDF, 600);
+    }
+    return;
+  }
+  exportarPeriodoPDF();
+}
+
+function exportarSigadPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF('l', 'mm', 'a4');
+  doc.setFillColor(0,43,92); doc.rect(0,0,297,20,'F');
+  doc.setTextColor(255,255,255); doc.setFontSize(18);
+  doc.text("CIMAER | Controle de Documentos", 148.5, 14, {align:"center"});
+  const dados = carregarDados(STORAGE_SIGAD).map(d => [d.sigad, d.tipo, isoParaBr(d.data), d.assunto||"", d.prazo?isoParaBr(d.prazo):"", d.situacao==="concluido"?"Concluído":d.situacao==="aguardando"?"Aguardando":"Pendente"]);
+  doc.autoTable({head: [["SIGAD","Tipo","Entrada","Assunto","Prazo","Situação"]], body: dados, startY: 25, theme: 'grid'});
+  doc.save("CIMAER_SIGAD_" + hojeIso() + ".pdf");
+}
+
+function exportarSigadExcel() {
+  const dados = carregarDados(STORAGE_SIGAD).map(d => ({SIGAD:d.sigad,Tipo:d.tipo,Entrada:isoParaBr(d.data),Assunto:d.assunto||"",Prazo:d.prazo?isoParaBr(d.prazo):"",Situacao:d.situacao==="concluido"?"Concluído":d.situacao==="aguardando"?"Aguardando":"Pendente"}));
+  const ws = XLSX.utils.json_to_sheet(dados);
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "SIGAD");
+  XLSX.writeFile(wb, "CIMAER_SIGAD_" + hojeIso() + ".xlsx");
+}
+
+/* BACKUP */
+function backupDados() {
+  const dados = {sigad: carregarDados(STORAGE_SIGAD), eventos: carregarDados(STORAGE_EVENTOS)};
+  const blob = new Blob([JSON.stringify(dados, null, 2)], {type: "application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = url; a.download = "cimaer_backup_" + hojeIso() + ".json"; a.click();
+  URL.revokeОбъектURL(url);
+}
+function restaurarDados(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      const data = JSON.parse(ev.target.result);
+      localStorage.setItem(STORAGE_SIGAD, JSON.stringify(data.sigad || []));
+      localStorage.setItem(STORAGE_EVENTOS, JSON.stringify(data.eventos || []));
+      alert("Backup restaurado com sucesso! Página será recarregada.");
+      location.reload();
+    } catch { alert("Arquivo inválido."); }
+  };
+  reader.readAsText(file);
+}
+
+/* INICIA */
+atualizarTabela();
+</script>
+</body>
+</html>
