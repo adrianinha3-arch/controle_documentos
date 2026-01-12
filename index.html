@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>CIMAER | Chefe de Seção v3.9</title>
+  <title>CIMAER | Chefe de Seção v4.0</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
@@ -13,7 +13,7 @@
   <style>
     *{margin:0;padding:0;box-sizing:border-box;font-family:'Roboto',sans-serif;}
     body{background:#f0f7ff;color:#002b5c;padding:20px;min-height:100vh;}
-    .container{max-width:1600px;margin:auto;background:white;border-radius:16px;box-shadow:0 10px 40px rgba(0,43,92,0.15);overflow:hidden;}
+    .container{max-width:1800px;margin:auto;background:white;border-radius:16px;box-shadow:0 10px 40px rgba(0,43,92,0.15);overflow:hidden;}
     header{background:linear-gradient(135deg,#002b5c,#003b7c);color:white;padding:30px;text-align:center;position:relative;}
     header h1{font-size:2.4rem;font-weight:700;}
     header .versao{position:absolute;bottom:8px;right:15px;font-size:0.9rem;opacity:0.9;}
@@ -26,9 +26,21 @@
     #contadorUrgente,#contadorAguardando{padding:18px;margin:20px 0;border-radius:12px;font-size:1.3rem;font-weight:bold;text-align:center;color:white;}
     #contadorUrgente{background:#d32f2f;}
     #contadorAguardando{background:#ff8f00;margin-top:10px;}
+    .dashboard-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;margin:20px 0;}
+    .card{background:white;border-radius:12px;padding:20px;box-shadow:0 4px 12px rgba(0,0,0,0.08);text-align:center;border-left:6px solid #002b5c;}
+    .card h3{font-size:0.9rem;color:#666;margin-bottom:10px;}
+    .card .valor{font-size:2rem;font-weight:700;color:#002b5c;}
+    .card.pendentes{border-left-color:#ff8f00;}
+    .card.urgentes{border-left-color:#d32f2f;}
+    .card.concluidos{border-left-color:#2e7d32;}
+    .card.aguardando{border-left-color:#ff8f00;}
     .top-bar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px;margin-bottom:20px;}
     #buscaSigad{width:260px;padding:12px;font-size:16px;border-radius:8px;border:1px solid #002b5c;}
+    #filtroStatus{min-width:160px;padding:10px 12px;font-size:15px;cursor:pointer;transition:all 0.3s;border-radius:6px;border:1px solid #002b5c;background:white;}
+    #filtroStatus:hover{border-color:#00aaff;box-shadow:0 0 0 1px rgba(0,170,255,0.3);}
+    .top-bar label{font-weight:500;color:#002b5c;white-space:nowrap;}
     .btn-ajuda{background:#455a64;color:white;padding:12px 20px;border:none;border-radius:8px;cursor:pointer;}
+    .btn-focus{background:#5d4037;color:white;padding:12px 20px;border:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:8px;}
     .export-buttons{margin:20px 0;text-align:right;}
     .btn-export{padding:10px 20px;margin-left:10px;border:none;border-radius:8px;cursor:pointer;font-weight:500;color:white;}
     .btn-pdf{background:#d32f2f;}.btn-excel{background:#1e7e34;}.btn-backup{background:#607d8b;}
@@ -61,15 +73,71 @@
     #calendar{margin-top:20px;background:white;padding:15px;border-radius:8px;min-height:600px;}
     .fc-event{cursor:pointer !important;}
     .fc-event.sigad-event{background:#e91e63 !important;border-color:#c2185b !important;color:white !important;}
-    .fc-event.sigad-concluido{background:#9e9e9e !important;border-color:#616161 !important;color:#ccc !important;text-decoration:line-throughput !important;}
+    .fc-event.sigad-concluido{background:#9e9e9e !important;border-color:#616161 !important;color:#ccc !important;text-decoration:line-through !important;}
     .footer{text-align:center;padding:20px;background:#f9f9f9;color:#555;font-size:0.9rem;border-top:1px solid #eee;}
     .legenda{margin:15px 0;padding:12px;background:#f5f9ff;border-radius:8px;font-size:0.9rem;}
+    .paginacao{display:flex;justify-content:center;align-items:center;gap:10px;margin:20px 0;padding:15px;background:#f9f9f9;border-radius:8px;}
+    .paginacao button{background:#002b5c;color:white;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-size:14px;}
+    .paginacao button:disabled{background:#ccc;cursor:not-allowed;}
+    .paginacao button:hover:not(:disabled){background:#003b7c;}
+    .paginacao-info{font-size:14px;color:#666;}
+    .paginacao input{width:60px;padding:8px;text-align:center;border:1px solid #ccc;border-radius:4px;}
+    .filtros-rapidos{display:flex;gap:10px;margin:15px 0;flex-wrap:wrap;}
+    .filtro-rapido{background:#e3f2fd;border:1px solid #bbdefb;padding:8px 16px;border-radius:20px;cursor:pointer;font-size:13px;color:#1565c0;transition:all 0.3s;}
+    .filtro-rapido:hover{background:#bbdefb;}
+    .filtro-rapido.ativo{background:#1565c0;color:white;}
+    
+    /* CORREÇÃO DO MODO FOCO */
+    .coluna-essencial, .coluna-oculta {
+      display: table-cell;
+    }
+    
+    .focus-mode .coluna-oculta {
+      display: none !important;
+    }
+    
+    .focus-mode .coluna-essencial {
+      display: table-cell !important;
+    }
+    
+    .gerenciar-filtros{position:relative;}
+    .dropdown-filtros{position:absolute;top:100%;right:0;background:white;border-radius:8px;box-shadow:0 5px 20px rgba(0,0,0,0.15);padding:15px;min-width:250px;z-index:100;display:none;margin-top:10px;}
+    .dropdown-filtros.active{display:block;}
+    .dropdown-filtros h4{margin-bottom:10px;color:#002b5c;}
+    .dropdown-filtros input{width:100%;padding:8px;margin-bottom:10px;border:1px solid #ccc;border-radius:4px;}
+    .dropdown-filtros button{width:100%;padding:8px;background:#002b5c;color:white;border:none;border-radius:4px;cursor:pointer;}
+    .filtros-salvos{margin-top:15px;}
+    .filtro-salvo{display:flex;justify-content:space-between;align-items:center;padding:8px;border-bottom:1px solid #eee;cursor:pointer;}
+    .filtro-salvo:hover{background:#f5f5f5;}
+    .filtro-salvo .excluir{color:#d32f2f;cursor:pointer;}
+    
+    /* POP-UP DE ATUALIZAÇÃO */
+    .modal-backup-update{display:none;position:fixed;z-index:9999;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.8);justify-content:center;align-items:center;}
+    .modal-backup-update .modal-content{background:linear-gradient(135deg,#ff9800,#f57c00);color:white;padding:30px;width:90%;max-width:600px;border-radius:16px;box-shadow:0 15px 40px rgba(0,0,0,0.4);position:relative;}
+    .modal-backup-update .close{color:white;font-size:36px;top:15px;right:25px;}
+    .modal-backup-update h2{font-size:1.8rem;margin-bottom:20px;text-align:center;color:white;}
+    .modal-backup-update .alerta-icon{font-size:4rem;text-align:center;margin-bottom:20px;color:#ffeb3b;}
+    .modal-backup-update .info-box{background:rgba(255,255,255,0.15);padding:20px;border-radius:12px;margin:20px 0;}
+    .modal-backup-update .info-box h3{margin-bottom:10px;color:#ffeb3b;}
+    .modal-backup-update .btn-backup-urgente{background:#d32f2f;color:white;padding:15px 30px;border:none;border-radius:8px;font-size:1.1rem;font-weight:bold;cursor:pointer;display:block;width:100%;margin-top:20px;transition:all 0.3s;}
+    .modal-backup-update .btn-backup-urgente:hover{background:#b71c1c;transform:translateY(-2px);box-shadow:0 5px 15px rgba(0,0,0,0.2);}
+    .modal-backup-update .btn-remind{background:transparent;color:white;padding:10px 20px;border:1px solid white;border-radius:8px;cursor:pointer;margin-top:15px;width:100%;}
+    .modal-backup-update .btn-remind:hover{background:rgba(255,255,255,0.1);}
     @media (max-width:768px){
       table,thead,tbody,th,td,tr{display:block;}
       thead tr{position:absolute;top:-9999px;left:-9999px;}
       tr{border:1px solid #ccc;margin-bottom:15px;border-radius:8px;background:#fafafa;}
       td{border:none;border-bottom:1px solid #eee;position:relative;padding-left:50%!important;text-align:right;}
       td:before{position:absolute;top:12px;left:12px;width:45%;padding-right:10px;white-space:nowrap;text-align:left;font-weight:bold;content:attr(data-label);}
+      .top-bar{flex-direction:column;align-items:stretch;}
+      #buscaSigad,#filtroStatus{width:100%;}
+      .dashboard-cards{grid-template-columns:1fr;}
+      .focus-mode td.coluna-oculta:before{display:none;}
+      .focus-mode td.coluna-essencial:before{display:block;}
+      .modal-backup-update .modal-content{padding:20px;margin:15px;}
+      .modal-backup-update h2{font-size:1.4rem;}
+      .modal-backup-update .alerta-icon{font-size:3rem;}
+      .modal-backup-update .info-box{padding:15px;}
     }
   </style>
 </head>
@@ -77,7 +145,7 @@
 <div class="container">
   <header>
     <h1>CIMAER - Controle de Documentos e Agenda</h1>
-    <div class="versao"> • v3.9 • </div>
+    <div class="versao"> • v4.0 • </div>
   </header>
 
   <div class="tabs">
@@ -88,16 +156,83 @@
   <!-- ABA SIGAD -->
   <div id="sigad" class="content active">
     <h2>Controle de Documentos do SIGADAER</h2>
-    <div id="contadorUrgente">Carregando...</div>
-    <div id="contadorAguardando">Carregando...</div>
+    
+    <!-- DASHBOARD RÁPIDO -->
+    <div class="dashboard-cards">
+      <div class="card total">
+        <h3>TOTAL DE DOCUMENTOS</h3>
+        <div class="valor" id="cardTotal">0</div>
+      </div>
+      <div class="card pendentes">
+        <h3>PENDENTES</h3>
+        <div class="valor" id="cardPendentes">0</div>
+      </div>
+      <div class="card urgentes">
+        <h3>URGENTES</h3>
+        <div class="valor" id="cardUrgentes">0</div>
+      </div>
+      <div class="card aguardando">
+        <h3>AGUARDANDO</h3>
+        <div class="valor" id="cardAguardando">0</div>
+      </div>
+      <div class="card concluidos">
+        <h3>CONCLUÍDOS</h3>
+        <div class="valor" id="cardConcluidos">0</div>
+      </div>
+    </div>
+
+    <!-- FILTROS RÁPIDOS -->
+    <div class="filtros-rapidos">
+      <div class="filtro-rapido" data-filtro="hoje">Vence Hoje</div>
+      <div class="filtro-rapido" data-filtro="semana">Esta Semana</div>
+      <div class="filtro-rapido" data-filtro="mes">Este Mês</div>
+      <div class="filtro-rapido" data-filtro="vencidos">Vencidos</div>
+      <div class="filtro-rapido" data-filtro="sem_link">Sem Link</div>
+    </div>
 
     <div class="top-bar">
-      <input type="text" id="buscaSigad" placeholder="Buscar SIGAD ou assunto...">
-      <button class="btn-ajuda" onclick="document.getElementById('modalAjuda').style.display='flex'">Ajuda / Backup</button>
+      <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+        <input type="text" id="buscaSigad" placeholder="Buscar SIGAD ou assunto...">
+        
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <label style="font-weight: 500;">Filtrar status:</label>
+          <select id="filtroStatus">
+            <option value="todos">Todos</option>
+            <option value="pendente">Pendentes</option>
+            <option value="aguardando">Aguardando</option>
+            <option value="concluido">Concluídos</option>
+            <option value="urgentes">Urgentes</option>
+          </select>
+        </div>
+
+        <div class="gerenciar-filtros">
+          <button class="btn-ajuda" onclick="toggleDropdownFiltros()">
+            <i class="fas fa-filter"></i> Filtros Salvos
+          </button>
+          <div class="dropdown-filtros" id="dropdownFiltros">
+            <h4>Salvar Filtro Atual</h4>
+            <input type="text" id="nomeFiltro" placeholder="Nome do filtro">
+            <button onclick="salvarFiltroAtual()">Salvar</button>
+            
+            <div class="filtros-salvos">
+              <h4>Filtros Salvos</h4>
+              <div id="listaFiltros"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div style="display: flex; gap: 10px;">
+        <button class="btn-focus" onclick="toggleFocusMode()">
+          <i class="fas fa-expand-alt"></i> Modo Foco
+        </button>
+        <button class="btn-ajuda" onclick="document.getElementById('modalAjuda').style.display='flex'">Ajuda / Backup</button>
+      </div>
     </div>
 
     <div style="text-align:right;margin-bottom:10px;color:#555;">
       Total de documentos: <strong id="totalDocs">0</strong>
+      <span id="infoFiltroAplicado" style="margin-left:20px;color:#d32f2f;font-weight:bold;"></span>
     </div>
 
     <div class="export-buttons">
@@ -130,19 +265,43 @@
     <table id="tabelaSigad">
       <thead>
         <tr>
-          <th data-col="sigad">SIGAD</th>
-          <th data-col="tipo">Tipo</th>
-          <th data-col="data">Entrada</th>
-          <th data-col="assunto">Assunto</th>
-          <th data-col="prazo">Prazo</th>
-          <th>Status</th>
-          <th data-col="situacao">Situação</th>
-          <th>Link</th>
-          <th>Ação</th>
+          <th data-col="sigad" class="coluna-essencial">SIGAD</th>
+          <th data-col="tipo" class="coluna-oculta">Tipo</th>
+          <th data-col="data" class="coluna-essencial">Entrada</th>
+          <th data-col="assunto" class="coluna-essencial">Assunto</th>
+          <th data-col="prazo" class="coluna-essencial">Prazo</th>
+          <th class="coluna-oculta">Status</th>
+          <th data-col="situacao" class="coluna-essencial">Situação</th>
+          <th class="coluna-oculta">Link</th>
+          <th class="coluna-essencial">Ação</th>
         </tr>
       </thead>
-      <tbody></tbody>
+      <tbody id="tabelaSigadBody"></tbody>
     </table>
+
+    <!-- PAGINAÇÃO -->
+    <div class="paginacao">
+      <button id="btnPrimeira" onclick="irParaPagina(1)">« Primeira</button>
+      <button id="btnAnterior" onclick="irParaPagina(paginaAtual - 1)">‹ Anterior</button>
+      
+      <span class="paginacao-info">
+        Página 
+        <input type="number" id="inputPagina" min="1" value="1" onchange="irParaPagina(parseInt(this.value))">
+        de <span id="totalPaginas">1</span>
+      </span>
+      
+      <button id="btnProxima" onclick="irParaPagina(paginaAtual + 1)">Próxima ›</button>
+      <button id="btnUltima" onclick="irParaPagina(totalPaginas)">Última »</button>
+      
+      <span style="margin-left:20px;font-size:14px;color:#666;">
+        <select id="itensPorPagina" onchange="mudarItensPorPagina()">
+          <option value="10">10 itens</option>
+          <option value="25" selected>25 itens</option>
+          <option value="50">50 itens</option>
+          <option value="100">100 itens</option>
+        </select>
+      </span>
+    </div>
   </div>
 
   <!-- ABA AGENDA -->
@@ -161,7 +320,7 @@
     <div id="calendar"></div>
   </div>
 
-  <div class="footer">CIMAER v3.9 • Última Atualização: 27/11/2025</div>
+  <div class="footer">CIMAER v4.0 • Última Atualização: 27/11/2025</div>
 </div>
 
 <!-- MODAL EVENTO -->
@@ -198,18 +357,24 @@
 <div id="modalAjuda" class="modal">
   <div class="modal-content">
     <span class="close" onclick="this.closest('.modal').style.display='none'">X</span>
-    <h2 style="color:#002b5c;">CIMAER v3.9 – Guia Rápido</h2>
+    <h2 style="color:#002b5c;">CIMAER v4.0 – Guia Rápido</h2>
     <ol style="padding-left:32px;line-height:1.0;font-size:1.05rem;">
+      <li><strong>Dashboard Rápido</strong><br>Cartões no topo mostram totais por categoria</li><br>
+      <li><strong>Filtros Rápidos</strong><br>Clique nos botões coloridos para filtrar documentos por período</li><br>
+      <li><strong>Filtros Salvos</strong><br>Salve combinações de filtros para uso rápido no botão "Filtros Salvos"</li><br>
+      <li><strong>Modo Foco</strong><br>Clique no botão roxo para mostrar apenas colunas essenciais</li><br>
+      <li><strong>Paginação</strong><br>Navegue entre páginas ou mude a quantidade de itens por página</li><br>
       <li><strong>Trocar de aba</strong><br>Clique em <strong>Controle de Documentos</strong> ou <strong>Agenda Completa</strong></li><br>
       <li><strong>Adicionar SIGAD</strong><br>Preencha número, tipo, data → <strong>Adicionar Documento</strong></li><br>
+      <li><strong>Filtrar por status</strong><br>Use o menu suspenso para mostrar apenas documentos com determinado status</li><br>
       <li><strong>Marcar situação</strong><br>Botões <span style="background:#ff8f00;padding:2px 8px;border-radius:2px;color:white;">Aguardando</span> ou <span style="background:#2e7d32;padding:2px 8px;border-radius:2px;color:white;">Concluir</span></li><br>
       <li><strong>Criar evento</strong><br>Botão azul <strong>+ Novo Evento</strong> ou clique no dia</li><br>
       <li><strong>Editar/Excluir evento</strong><br>Clique no retângulo colorido do evento</li><br>
       <li><strong>Navegar no calendário</strong><br>Botões Dia | Semana | Mês • setas left right • botão <strong>Hoje</strong></li><br>
-      <li><strong>Exportar agenda (NOVO!)</strong><br>
+      <li><strong>Exportar agenda</strong><br>
          • <strong>Exportar Mês Selecionado</strong> → só o que está na tela<br>
          • <strong>Exportar Semana Atual</strong> → muda para semana e baixa automaticamente</li><br>
-      <li><strong>Exportar documentos</strong><br>Botões PDF ou Excel na aba Controle de Documentos</li><br>
+      <li><strong>Exportar documentos</strong><br>Botões PDF ou Excel na aba Controle de Documentos (respeita filtros aplicados)</li><br>
       <li><strong>Backup semanal (OBRIGATÓRIO)</strong><br>Clique em <strong>Ajuda / Backup</strong> ou <strong>Backup Completo</strong></li><br>
       <li><strong>Dica</strong><br>Tecla <kbd>ESC</kbd> fecha qualquer janela</li>
     </ol>
@@ -219,16 +384,71 @@
   </div>
 </div>
 
+<!-- MODAL BACKUP ATUALIZAÇÃO -->
+<div id="modalBackupUpdate" class="modal-backup-update">
+  <div class="modal-content">
+    <span class="close" onclick="fecharModalBackupUpdate()">X</span>
+    
+    <div class="alerta-icon">
+      <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    
+    <h2>ATENÇÃO: ATUALIZAÇÃO DO SISTEMA</h2>
+    
+    <div class="info-box">
+      <h3><i class="fas fa-calendar-alt"></i> PERÍODO DE BACKUP OBRIGATÓRIO</h3>
+      <p>Uma nova versão do sistema CIMAER será instalada em:</p>
+      <p style="font-size:1.4rem;font-weight:bold;color:#ffeb3b;text-align:center;margin:10px 0;">
+        <i class="fas fa-clock"></i> <span id="dataAtualizacaoExibicao">15/12/2025 às 18:00</span>
+      </p>
+    </div>
+    
+    <div class="info-box">
+      <h3><i class="fas fa-exclamation-circle"></i> AÇÃO NECESSÁRIA</h3>
+      <p>Para garantir a segurança dos seus dados, <strong>é obrigatório realizar o backup completo do sistema</strong> antes da atualização.</p>
+      <p>Após a instalação da nova versão, todos os dados não backupados poderão ser perdidos.</p>
+    </div>
+    
+    <div class="info-box">
+      <h3><i class="fas fa-list-check"></i> O QUE FAZER AGORA:</h3>
+      <ol style="padding-left:20px;margin:10px 0;">
+        <li>Clique em <strong>"FAZER BACKUP AGORA"</strong> abaixo</li>
+        <li>Salve o arquivo JSON em um local seguro</li>
+        <li>Envie o arquivo para seu e-mail ou nuvem</li>
+        <li>Verifique se o backup foi concluído com sucesso</li>
+      </ol>
+    </div>
+    
+    <button class="btn-backup-urgente" onclick="fazerBackupUrgente()">
+      <i class="fas fa-download"></i> FAZER BACKUP AGORA
+    </button>
+    
+    <button class="btn-remind" onclick="lembrarMaisTarde()">
+      <i class="far fa-clock"></i> Lembrar em 1 hora
+    </button>
+    
+    <button class="btn-remind" onclick="marcarBackupFeito()" style="background:#2e7d32;">
+      <i class="fas fa-check-circle"></i> Já fiz backup
+    </button>
+    
+    <div style="text-align:center;margin-top:20px;font-size:0.9rem;opacity:0.9;">
+      <p><i class="fas fa-info-circle"></i> Este aviso aparecerá novamente até que o backup seja feito ou o período expire.</p>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/pt-br.js"></script>
 
 <script>
 // ====================================
-// CIMAER v3.9 – COMPLETO E PRONTO
+// CIMAER v4.0 – COM POP-UP DE BACKUP PROGRAMADO
 // ====================================
 
 const STORAGE_SIGAD = "cimaer_sigad";
 const STORAGE_EVENTOS = "cimaer_eventos";
+const STORAGE_FILTROS = "cimaer_filtros_salvos";
+const STORAGE_BACKUP_ALERTA = "cimaer_backup_alerta";
 
 const CORES_EVENTOS = {
   "ris aer": "#d32f2f", ferias: "#ff8f00", dispensa_medica: "#8e24aa", dispensa_chefe: "#ffb300",
@@ -238,11 +458,51 @@ const CORES_EVENTOS = {
 
 const feriados = ["2025-01-01","2025-02-17","2025-02-18","2025-03-03","2025-04-18","2025-04-21","2025-05-01","2025-06-05","2025-09-07","2025-10-12","2025-11-02","2025-11-15","2025-11-20","2025-12-25","2026-01-01","2026-03-02","2026-03-03","2026-03-04","2026-04-03","2026-04-21","2026-06-11","2026-09-07","2026-10-12","2026-11-02","2026-11-15","2026-11-20","2026-12-25","2027-01-01","2027-02-15","2027-02-16","2027-04-02","2027-04-16","2027-05-01","2027-06-03","2027-09-07","2027-10-12","2027-11-02","2027-11-15","2027-11-20","2027-12-25","2028-01-01","2028-02-28","2028-02-29","2028-03-17","2028-04-21","2028-05-01","2028-05-21","2028-09-07","2028-10-12","2028-11-02","2028-11-15","2028-11-20","2028-12-25"];
 
+// CONFIGURAÇÃO DO ALERTA DE ATUALIZAÇÃO
+const CONFIG_ATUALIZACAO = {
+  // DEFINA AQUI A DATA E HORA DO ALERTA
+  dataAtualizacao: "2026-01-14", // Data da atualização (YYYY-MM-DD)
+  horaAtualizacao: "08:00",      // Hora da atualização (HH:MM)
+  
+  // PERÍODO PARA EXIBIR O ALERTA ANTES DA ATUALIZAÇÃO
+  // O alerta começará a aparecer 7 dias antes da atualização
+  diasAntecedencia: 2,
+  
+  // Mensagem personalizada
+  mensagem: "Uma nova versão do sistema CIMAER será instalada. É obrigatório realizar o backup completo dos dados antes da atualização para evitar perda de informações.",
+  
+  // MODO TESTE - defina como true para testar o pop-up sempre
+  modoTeste: false
+};
+
+// Carregar configuração de alerta
+let alertaConfig = carregarDados(STORAGE_BACKUP_ALERTA) || {};
+
+// Variáveis de paginação
+let paginaAtual = 1;
+let itensPorPagina = 25;
+let totalPaginas = 1;
+let modoFocus = false;
+let filtroAtivo = null;
+
 function hojeIso() {
   const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
   return d.toISOString().split('T')[0];
 }
-function isoParaBr(iso) { if (!iso) return ""; const [a,m,d] = iso.split("-"); return `${d}/${m}/${a}`; }
+function hojeHora() {
+  const d = new Date();
+  return d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
+}
+function isoParaBr(iso) { 
+  if (!iso) return ""; 
+  const [a,m,d] = iso.split("-"); 
+  return `${d}/${m}/${a}`; 
+}
+function brParaIso(br) {
+  if (!br) return "";
+  const [d,m,a] = br.split("/");
+  return `${a}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+}
 function adicionarDiasUteis(dataIso, dias) {
   let d = new Date(dataIso); let count = 0;
   while (count < dias) {
@@ -259,6 +519,141 @@ let calendar, calendarInitialized = false;
 let eventoAtual = null;
 let ordemColuna = null, ordemAsc = true;
 
+/* SISTEMA DE ALERTA DE BACKUP */
+function verificarAlertaBackup() {
+  console.log("=== VERIFICANDO ALERTA DE BACKUP ===");
+  
+  // MODO TESTE: mostrar sempre
+  if (CONFIG_ATUALIZACAO.modoTeste) {
+    console.log("✅ MODO TESTE ATIVADO - Pop-up será mostrado");
+    mostrarPopUpBackupTeste();
+    return;
+  }
+  
+  // Verificar se backup já foi feito
+  if (alertaConfig.backupFeito) {
+    console.log("✅ Backup já realizado em:", alertaConfig.dataBackup);
+    return;
+  }
+  
+  // Verificar se o usuário pediu para lembrar mais tarde
+  if (alertaConfig.lembrarMaisTarde) {
+    const lembrarAte = new Date(alertaConfig.lembrarMaisTarde);
+    const agora = new Date();
+    if (agora < lembrarAte) {
+      console.log("Alerta adiado até:", lembrarAte);
+      return;
+    }
+  }
+  
+  // Calcular datas
+  const dataAtualizacao = new Date(CONFIG_ATUALIZACAO.dataAtualizacao + "T" + CONFIG_ATUALIZACAO.horaAtualizacao);
+  const dataInicioAlerta = new Date(dataAtualizacao);
+  dataInicioAlerta.setDate(dataInicioAlerta.getDate() - CONFIG_ATUALIZACAO.diasAntecedencia);
+  
+  const agora = new Date();
+  
+  // Verificar se estamos no período de alerta
+  if (agora >= dataInicioAlerta && agora <= dataAtualizacao) {
+    mostrarPopUpBackup();
+  } else if (agora > dataAtualizacao) {
+    // Período de alerta já passou
+    console.log("Período de alerta de atualização já passou.");
+  } else {
+    // Ainda não é hora do alerta
+    const diasFaltantes = Math.ceil((dataInicioAlerta - agora) / (1000 * 60 * 60 * 24));
+    console.log(`Alerta de backup aparecerá em ${diasFaltantes} dias.`);
+  }
+}
+
+function mostrarPopUpBackup() {
+  const dataAtualizacao = new Date(CONFIG_ATUALIZACAO.dataAtualizacao + "T" + CONFIG_ATUALIZACAO.horaAtualizacao);
+  const dataExibicao = 
+    dataAtualizacao.getDate().toString().padStart(2, '0') + '/' +
+    (dataAtualizacao.getMonth() + 1).toString().padStart(2, '0') + '/' +
+    dataAtualizacao.getFullYear() + ' às ' +
+    dataAtualizacao.getHours().toString().padStart(2, '0') + ':' +
+    dataAtualizacao.getMinutes().toString().padStart(2, '0');
+  
+  document.getElementById("dataAtualizacaoExibicao").textContent = dataExibicao;
+  
+  // Mostrar modal após 2 segundos (para dar tempo da página carregar)
+  setTimeout(() => {
+    document.getElementById("modalBackupUpdate").style.display = "flex";
+  }, 2000);
+}
+
+function mostrarPopUpBackupTeste() {
+  console.log("Mostrando pop-up de teste...");
+  
+  // Data de exemplo para exibição
+  const dataExemplo = new Date();
+  dataExemplo.setDate(dataExemplo.getDate() + 7); // 7 dias no futuro
+  
+  const dataExibicao = 
+    dataExemplo.getDate().toString().padStart(2, '0') + '/' +
+    (dataExemplo.getMonth() + 1).toString().padStart(2, '0') + '/' +
+    dataExemplo.getFullYear() + ' às 18:00';
+  
+  document.getElementById("dataAtualizacaoExibicao").textContent = dataExibicao;
+  
+  // Mostrar modal
+  document.getElementById("modalBackupUpdate").style.display = "flex";
+  console.log("✅ Pop-up de teste mostrado!");
+}
+
+function fazerBackupUrgente() {
+  // Executar backup
+  backupDados();
+  
+  // Marcar como backup feito
+  alertaConfig.backupFeito = true;
+  alertaConfig.dataBackup = new Date().toISOString();
+  salvarDados(STORAGE_BACKUP_ALERTA, alertaConfig);
+  
+  // Fechar modal
+  fecharModalBackupUpdate();
+  
+  // Mostrar mensagem de confirmação
+  setTimeout(() => {
+    alert("Backup realizado com sucesso! Seus dados estão seguros para a atualização.\n\nArquivo salvo como: cimaer_backup_" + hojeIso() + ".json");
+  }, 500);
+}
+
+function lembrarMaisTarde() {
+  // Adicionar 1 hora para lembrar depois
+  const agora = new Date();
+  const umaHoraDepois = new Date(agora.getTime() + (60 * 60 * 1000));
+  
+  alertaConfig.lembrarMaisTarde = umaHoraDepois.toISOString();
+  salvarDados(STORAGE_BACKUP_ALERTA, alertaConfig);
+  
+  // Fechar modal
+  fecharModalBackupUpdate();
+  
+  // Mostrar mensagem
+  alert("Lembraremos você sobre o backup em 1 hora.\n\nNão esqueça de fazer o backup antes da atualização!");
+}
+
+function marcarBackupFeito() {
+  alertaConfig.backupFeito = true;
+  alertaConfig.dataBackup = new Date().toISOString();
+  salvarDados(STORAGE_BACKUP_ALERTA, alertaConfig);
+  fecharModalBackupUpdate();
+  alert("Ótimo! O sistema não mostrará mais alertas de backup.");
+}
+
+function fecharModalBackupUpdate() {
+  document.getElementById("modalBackupUpdate").style.display = "none";
+}
+
+// Permitir fechar com ESC
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'Escape') {
+    fecharModalBackupUpdate();
+  }
+});
+
 /* ABAS */
 document.querySelectorAll(".tab").forEach(tab => {
   tab.addEventListener("click", () => {
@@ -271,13 +666,193 @@ document.querySelectorAll(".tab").forEach(tab => {
   });
 });
 
+/* FUNÇÕES DE PAGINAÇÃO */
+function atualizarPaginacao(totalItens) {
+  totalPaginas = Math.ceil(totalItens / itensPorPagina);
+  if (paginaAtual > totalPaginas) paginaAtual = totalPaginas;
+  if (paginaAtual < 1) paginaAtual = 1;
+  
+  document.getElementById("totalPaginas").textContent = totalPaginas;
+  document.getElementById("inputPagina").value = paginaAtual;
+  document.getElementById("btnPrimeira").disabled = paginaAtual === 1;
+  document.getElementById("btnAnterior").disabled = paginaAtual === 1;
+  document.getElementById("btnProxima").disabled = paginaAtual === totalPaginas;
+  document.getElementById("btnUltima").disabled = paginaAtual === totalPaginas;
+}
+
+function irParaPagina(pagina) {
+  if (pagina < 1 || pagina > totalPaginas) return;
+  paginaAtual = pagina;
+  atualizarTabela();
+}
+
+function mudarItensPorPagina() {
+  itensPorPagina = parseInt(document.getElementById("itensPorPagina").value);
+  paginaAtual = 1;
+  atualizarTabela();
+}
+
+/* MODO FOCO */
+function toggleFocusMode() {
+  modoFocus = !modoFocus;
+  const tabela = document.getElementById("tabelaSigad");
+  const btn = document.querySelector(".btn-focus");
+  
+  if (modoFocus) {
+    tabela.classList.add("focus-mode");
+    btn.innerHTML = '<i class="fas fa-compress-alt"></i> Modo Normal';
+    btn.style.background = "#2e7d32";
+    btn.title = "Voltar para visualização completa";
+  } else {
+    tabela.classList.remove("focus-mode");
+    btn.innerHTML = '<i class="fas fa-expand-alt"></i> Modo Foco';
+    btn.style.background = "#5d4037";
+    btn.title = "Mostrar apenas colunas essenciais";
+  }
+  
+  setTimeout(() => {
+    const tbody = document.querySelector("#tabelaSigad tbody");
+    const html = tbody.innerHTML;
+    tbody.innerHTML = html;
+  }, 50);
+}
+
+/* FILTROS RÁPIDOS */
+document.querySelectorAll(".filtro-rapido").forEach(filtro => {
+  filtro.addEventListener("click", function() {
+    document.querySelectorAll(".filtro-rapido").forEach(f => f.classList.remove("ativo"));
+    this.classList.add("ativo");
+    const tipo = this.dataset.filtro;
+    aplicarFiltroRapido(tipo);
+  });
+});
+
+function aplicarFiltroRapido(tipo) {
+  filtroAtivo = tipo;
+  paginaAtual = 1;
+  
+  let infoText = "";
+  switch(tipo) {
+    case "hoje": infoText = "Filtro: Vence Hoje"; break;
+    case "semana": infoText = "Filtro: Esta Semana"; break;
+    case "mes": infoText = "Filtro: Este Mês"; break;
+    case "vencidos": infoText = "Filtro: Vencidos"; break;
+    case "sem_link": infoText = "Filtro: Sem Link"; break;
+    default: infoText = "";
+  }
+  
+  document.getElementById("infoFiltroAplicado").textContent = infoText;
+  atualizarTabela();
+}
+
+/* FILTROS SALVOS */
+function salvarDados(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
+function carregarDados(k) { return JSON.parse(localStorage.getItem(k) || "[]"); }
+
+function salvarFiltroAtual() {
+  const nome = document.getElementById("nomeFiltro").value.trim();
+  if (!nome) return alert("Digite um nome para o filtro!");
+  
+  const busca = document.getElementById("buscaSigad").value;
+  const status = document.getElementById("filtroStatus").value;
+  const filtroRapido = filtroAtivo;
+  
+  let filtros = carregarDados(STORAGE_FILTROS);
+  
+  if (filtros.some(f => f.nome === nome)) {
+    if (!confirm(`Já existe um filtro salvo com o nome "${nome}". Deseja substituir?`)) return;
+    filtros = filtros.filter(f => f.nome !== nome);
+  }
+  
+  filtros.push({
+    nome: nome,
+    busca: busca,
+    status: status,
+    filtroRapido: filtroRapido,
+    data: hojeIso()
+  });
+  
+  salvarDados(STORAGE_FILTROS, filtros);
+  document.getElementById("nomeFiltro").value = "";
+  atualizarListaFiltros();
+  alert(`Filtro "${nome}" salvo com sucesso!`);
+}
+
+function aplicarFiltroSalvo(filtro) {
+  document.getElementById("buscaSigad").value = filtro.busca || "";
+  document.getElementById("filtroStatus").value = filtro.status || "todos";
+  
+  if (filtro.filtroRapido) {
+    filtroAtivo = filtro.filtroRapido;
+    document.querySelectorAll(".filtro-rapido").forEach(f => {
+      f.classList.remove("ativo");
+      if (f.dataset.filtro === filtro.filtroRapido) {
+        f.classList.add("ativo");
+      }
+    });
+    document.getElementById("infoFiltroAplicado").textContent = `Filtro: ${filtro.nome}`;
+  } else {
+    filtroAtivo = null;
+    document.querySelectorAll(".filtro-rapido").forEach(f => f.classList.remove("ativo"));
+    document.getElementById("infoFiltroAplicado").textContent = `Filtro: ${filtro.nome}`;
+  }
+  
+  paginaAtual = 1;
+  atualizarTabela();
+  toggleDropdownFiltros();
+}
+
+function excluirFiltroSalvo(nome) {
+  if (!confirm(`Excluir o filtro "${nome}"?`)) return;
+  
+  let filtros = carregarDados(STORAGE_FILTROS);
+  filtros = filtros.filter(f => f.nome !== nome);
+  salvarDados(STORAGE_FILTROS, filtros);
+  atualizarListaFiltros();
+}
+
+function atualizarListaFiltros() {
+  const lista = document.getElementById("listaFiltros");
+  const filtros = carregarDados(STORAGE_FILTROS);
+  
+  if (filtros.length === 0) {
+    lista.innerHTML = '<div style="color:#666;text-align:center;padding:10px;">Nenhum filtro salvo</div>';
+    return;
+  }
+  
+  lista.innerHTML = filtros.map(f => `
+    <div class="filtro-salvo">
+      <span onclick="aplicarFiltroSalvo(${JSON.stringify(f)})" style="flex:1;cursor:pointer;">
+        ${f.nome} <small style="color:#666;">(${isoParaBr(f.data)})</small>
+      </span>
+      <span class="excluir" onclick="excluirFiltroSalvo('${f.nome}')">
+        <i class="fas fa-trash"></i>
+      </span>
+    </div>
+  `).join("");
+}
+
+function toggleDropdownFiltros() {
+  document.getElementById("dropdownFiltros").classList.toggle("active");
+  if (document.getElementById("dropdownFiltros").classList.contains("active")) {
+    atualizarListaFiltros();
+  }
+}
+
+// Fecha dropdown ao clicar fora
+document.addEventListener("click", function(event) {
+  const dropdown = document.getElementById("dropdownFiltros");
+  const btn = document.querySelector(".gerenciar-filtros");
+  if (!btn.contains(event.target) && !dropdown.contains(event.target)) {
+    dropdown.classList.remove("active");
+  }
+});
+
 /* SIGAD */
 function mostrarCampoPrazo() {
   document.getElementById("campoPrazoManual").style.display = 
     document.getElementById("tipoDoc").value === "recebido" ? "flex" : "none";
 }
-function salvarDados(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
-function carregarDados(k) { return JSON.parse(localStorage.getItem(k) || "[]"); }
 
 function adicionarSigad() {
   const sigad = document.getElementById("sigadInput").value.trim().toUpperCase();
@@ -295,62 +870,116 @@ function adicionarSigad() {
   if (docs.some(d => d.sigad === sigad)) return alert(`O SIGAD ${sigad} já existe!`);
   docs.push({ sigad, tipo, data, assunto, prazo, situacao: "pendente", link });
   salvarDados(STORAGE_SIGAD, docs);
-  limparFormularioSigad(); atualizarTabela();
+  limparFormularioSigad(); 
+  paginaAtual = 1;
+  atualizarTabela();
   if (calendar) atualizarSigadsNoCalendario();
 }
 function limparFormularioSigad() {
   ["sigadInput","dataDoc","assuntoDoc","linkDoc","prazoManual"].forEach(id => document.getElementById(id).value = "");
 }
 
-/* TABELA SIGAD */
+/* TABELA SIGAD COM PAGINAÇÃO */
 function atualizarTabela() {
-  const tbody = document.querySelector("#tabelaSigad tbody"); tbody.innerHTML = "";
+  const tbody = document.querySelector("#tabelaSigad tbody"); 
+  tbody.innerHTML = "";
   let docs = carregarDados(STORAGE_SIGAD);
+  
   const busca = document.getElementById("buscaSigad").value.toLowerCase();
-  if (busca) docs = docs.filter(d => d.sigad.toLowerCase().includes(busca) || (d.assunto||"").toLowerCase().includes(busca));
-
+  if (busca) {
+    docs = docs.filter(d => 
+      d.sigad.toLowerCase().includes(busca) || 
+      (d.assunto || "").toLowerCase().includes(busca)
+    );
+  }
+  
+  const filtroStatus = document.getElementById("filtroStatus").value;
+  const hoje = hojeIso();
+  if (filtroStatus !== "todos") {
+    docs = docs.filter(d => {
+      if (filtroStatus === "pendente") {
+        return d.situacao === "pendente" || !d.situacao;
+      } else if (filtroStatus === "aguardando") {
+        return d.situacao === "aguardando";
+      } else if (filtroStatus === "concluido") {
+        return d.situacao === "concluido";
+      } else if (filtroStatus === "urgentes") {
+        if (!d.prazo) return false;
+        const prazo = new Date(d.prazo);
+        const hojeObj = new Date(hoje);
+        const diffDias = Math.ceil((prazo - hojeObj) / (1000 * 60 * 60 * 24));
+        return (d.prazo < hoje) || (d.prazo === hoje) || (diffDias <= 3 && d.situacao !== "concluido");
+      }
+      return true;
+    });
+  }
+  
+  if (filtroAtivo) {
+    const hojeObj = new Date(hoje);
+    
+    docs = docs.filter(d => {
+      if (!d.prazo) return filtroAtivo === "sem_link" ? !d.link : false;
+      
+      const prazo = new Date(d.prazo);
+      const diffDias = Math.ceil((prazo - hojeObj) / (1000 * 60 * 60 * 24));
+      
+      switch(filtroAtivo) {
+        case "hoje": return d.prazo === hoje;
+        case "semana": return diffDias >= 0 && diffDias <= 7;
+        case "mes": return diffDias >= 0 && diffDias <= 30;
+        case "vencidos": return d.prazo < hoje;
+        case "sem_link": return !d.link;
+        default: return true;
+      }
+    });
+  }
+  
   if (ordemColuna) {
     docs.sort((a,b) => {
       let x = a[ordemColuna] || "", y = b[ordemColuna] || "";
-      if (ordemColuna === "data" || ordemColuna === "prazo") { x = x || "9999-99-99"; y = y || "9999-99-99"; }
+      if (ordemColuna === "data" || ordemColuna === "prazo") { 
+        x = x || "9999-99-99"; 
+        y = y || "9999-99-99"; 
+      }
       return ordemAsc ? (x < y ? -1 : x > y ? 1 : 0) : (x > y ? -1 : x < y ? 1 : 0);
     });
   }
 
-  document.getElementById("totalDocs").textContent = docs.length;
-  document.querySelectorAll("#tabelaSigad th").forEach(th => th.classList.remove("sorted-asc","sorted-desc"));
-  if (ordemColuna) document.querySelector(`#tabelaSigad th[data-col="${ordemColuna}"]`).classList.add(ordemAsc ? "sorted-asc" : "sorted-desc");
-
-  let urgentes = 0, aguardandoCount = 0;
-  const hoje = hojeIso();
-
-  docs.forEach(d => {
+  atualizarDashboard(docs, hoje);
+  
+  const totalDocs = docs.length;
+  atualizarPaginacao(totalDocs);
+  
+  const inicio = (paginaAtual - 1) * itensPorPagina;
+  const fim = inicio + itensPorPagina;
+  const docsPagina = docs.slice(inicio, fim);
+  
+  docsPagina.forEach(d => {
     const tr = document.createElement("tr");
     let status = "", classe = "ok";
 
     if (d.prazo) {
       if (d.situacao === "concluido") { status = "Concluído"; classe = "concluido"; }
-      else if (d.situacao === "aguardando") { status = "Aguardando resposta"; classe = "aguardando"; aguardandoCount++; }
-      else if (d.prazo < hoje) { status = "Vencido"; classe = "vencido"; urgentes++; }
-      else if (d.prazo === hoje) { status = "Vence hoje"; classe = "quase"; urgentes++; }
+      else if (d.situacao === "aguardando") { status = "Aguardando resposta"; classe = "aguardando"; }
+      else if (d.prazo < hoje) { status = "Vencido"; classe = "vencido"; }
+      else if (d.prazo === hoje) { status = "Vence hoje"; classe = "quase"; }
       else { status = "Em prazo"; classe = "ok"; }
     } else {
       status = d.situacao === "concluido" ? "Concluído" : d.situacao === "aguardando" ? "Aguardando" : "Sem prazo";
       classe = d.situacao === "concluido" ? "concluido" : d.situacao === "aguardando" ? "aguardando" : "ok";
-      if (d.situacao === "aguardando") aguardandoCount++;
     }
 
     tr.className = classe;
     tr.innerHTML = `
-      <td data-label="SIGAD">${d.sigad}</td>
-      <td data-label="Tipo">${d.tipo}</td>
-      <td data-label="Entrada">${isoParaBr(d.data)}</td>
-      <td data-label="Assunto">${d.assunto || ""}</td>
-      <td data-label="Prazo">${d.prazo ? isoParaBr(d.prazo) : ""}</td>
-      <td>${status}</td>
-      <td data-label="Situação" style="font-weight:bold;">${d.situacao === "concluido" ? "Concluído" : d.situacao === "aguardando" ? "Aguardando" : "Pendente"}</td>
-      <td data-label="Link">${d.link ? `<a href="${d.link}" target="_blank" class="link-icon"><i class="fas fa-link"></i></a>` : ""}</td>
-      <td style="white-space:nowrap;">
+      <td data-label="SIGAD" class="coluna-essencial">${d.sigad}</td>
+      <td data-label="Tipo" class="coluna-oculta">${d.tipo}</td>
+      <td data-label="Entrada" class="coluna-essencial">${isoParaBr(d.data)}</td>
+      <td data-label="Assunto" class="coluna-essencial">${d.assunto || ""}</td>
+      <td data-label="Prazo" class="coluna-essencial">${d.prazo ? isoParaBr(d.prazo) : ""}</td>
+      <td data-label="Status" class="coluna-oculta">${status}</td>
+      <td data-label="Situação" class="coluna-essencial" style="font-weight:bold;">${d.situacao === "concluido" ? "Concluído" : d.situacao === "aguardando" ? "Aguardando" : "Pendente"}</td>
+      <td data-label="Link" class="coluna-oculta">${d.link ? `<a href="${d.link}" target="_blank" class="link-icon"><i class="fas fa-link"></i></a>` : ""}</td>
+      <td data-label="Ação" class="coluna-essencial" style="white-space:nowrap;">
         ${d.situacao !== "concluido" ? `<button onclick="marcarAguardando('${d.sigad}')" style="background:#ff8f00;color:white;border:none;padding:6px 10px;border-radius:4px;font-size:12px;cursor:pointer;margin:2px;">Aguardando</button>` : ""}
         ${d.situacao !== "concluido" ? `<button onclick="concluirSigad('${d.sigad}')" style="background:#2e7d32;color:white;border:none;padding:6px 10px;border-radius:4px;font-size:12px;cursor:pointer;margin:2px;">Concluir</button>` : ""}
         <button onclick="excluirSigad('${d.sigad}')" style="background:#d32f2f;color:white;border:none;padding:6px 10px;border-radius:4px;font-size:12px;cursor:pointer;margin:2px;">Excluir</button>
@@ -359,25 +988,85 @@ function atualizarTabela() {
     tbody.appendChild(tr);
   });
 
-  const cUrg = document.getElementById("contadorUrgente");
-  const cAgu = document.getElementById("contadorAguardando");
-  cUrg.textContent = urgentes === 0 ? "Nenhum documento urgente" : `${urgentes} documento${urgentes>1?'s':''} urgente${urgentes>1?'s':''}!`;
-  cUrg.style.background = urgentes === 0 ? "#4caf50" : "#d32f2f";
-  cAgu.textContent = aguardandoCount === 0 ? "Nenhum aguardando resposta" : `${aguardandoCount} aguardando resposta`;
-  cAgu.style.display = aguardandoCount === 0 ? "none" : "block";
+  document.getElementById("totalDocs").textContent = totalDocs;
+  document.querySelectorAll("#tabelaSigad th").forEach(th => th.classList.remove("sorted-asc","sorted-desc"));
+  if (ordemColuna) {
+    document.querySelector(`#tabelaSigad th[data-col="${ordemColuna}"]`).classList.add(ordemAsc ? "sorted-asc" : "sorted-desc");
+  }
 }
 
-function marcarAguardando(sigad) { if(confirm(`Marcar SIGAD ${sigad} como "Aguardando Resposta"?`)) { let docs=carregarDados(STORAGE_SIGAD); docs=docs.map(d=>d.sigad===sigad?{...d,situacao:"aguardando"}:d); salvarDados(STORAGE_SIGAD,docs); atualizarTabela(); if(calendar) atualizarSigadsNoCalendario(); }}
-function concluirSigad(sigad) { let docs=carregarDados(STORAGE_SIGAD); docs=docs.map(d=>d.sigad===sigad?{...d,situacao:"concluido"}:d); salvarDados(STORAGE_SIGAD,docs); atualizarTabela(); if(calendar) atualizarSigadsNoCalendario(); }
-function excluirSigad(sigad) { if(confirm("Excluir permanentemente o SIGAD "+sigad+"?")) { let docs=carregarDados(STORAGE_SIGAD); docs=docs.filter(d=>d.sigad!==sigad); salvarDados(STORAGE_SIGAD,docs); atualizarTabela(); if(calendar) atualizarSigadsNoCalendario(); }}
+function atualizarDashboard(docs, hoje) {
+  const total = docs.length;
+  const pendentes = docs.filter(d => (d.situacao === "pendente" || !d.situacao) && d.situacao !== "concluido").length;
+  const urgentes = docs.filter(d => {
+    if (!d.prazo || d.situacao === "concluido") return false;
+    const prazo = new Date(d.prazo);
+    const hojeObj = new Date(hoje);
+    const diffDias = Math.ceil((prazo - hojeObj) / (1000 * 60 * 60 * 24));
+    return (d.prazo < hoje) || (d.prazo === hoje) || (diffDias <= 3);
+  }).length;
+  const aguardando = docs.filter(d => d.situacao === "aguardando").length;
+  const concluidos = docs.filter(d => d.situacao === "concluido").length;
+  
+  document.getElementById("cardTotal").textContent = total;
+  document.getElementById("cardPendentes").textContent = pendentes;
+  document.getElementById("cardUrgentes").textContent = urgentes;
+  document.getElementById("cardAguardando").textContent = aguardando;
+  document.getElementById("cardConcluidos").textContent = concluidos;
+}
+
+function marcarAguardando(sigad) { 
+  if(confirm(`Marcar SIGAD ${sigad} como "Aguardando Resposta"?`)) { 
+    let docs=carregarDados(STORAGE_SIGAD); 
+    docs=docs.map(d=>d.sigad===sigad?{...d,situacao:"aguardando"}:d); 
+    salvarDados(STORAGE_SIGAD,docs); 
+    paginaAtual = 1;
+    atualizarTabela(); 
+    if(calendar) atualizarSigadsNoCalendario(); 
+  }
+}
+function concluirSigad(sigad) { 
+  let docs=carregarDados(STORAGE_SIGAD); 
+  docs=docs.map(d=>d.sigad===sigad?{...d,situacao:"concluido"}:d); 
+  salvarDados(STORAGE_SIGAD,docs); 
+  paginaAtual = 1;
+  atualizarTabela(); 
+  if(calendar) atualizarSigadsNoCalendario(); 
+}
+function excluirSigad(sigad) { 
+  if(confirm("Excluir permanentemente o SIGAD "+sigad+"?")) { 
+    let docs=carregarDados(STORAGE_SIGAD); 
+    docs=docs.filter(d=>d.sigad!==sigad); 
+    salvarDados(STORAGE_SIGAD,docs); 
+    paginaAtual = 1;
+    atualizarTabela(); 
+    if(calendar) atualizarSigadsNoCalendario(); 
+  }
+}
 
 /* ORDENAÇÃO E BUSCA */
-document.getElementById("buscaSigad").addEventListener("input", atualizarTabela);
+document.getElementById("buscaSigad").addEventListener("input", function() {
+  paginaAtual = 1;
+  filtroAtivo = null;
+  document.querySelectorAll(".filtro-rapido").forEach(f => f.classList.remove("ativo"));
+  document.getElementById("infoFiltroAplicado").textContent = "";
+  atualizarTabela();
+});
+
+document.getElementById("filtroStatus").addEventListener("change", function() {
+  paginaAtual = 1;
+  filtroAtivo = null;
+  document.querySelectorAll(".filtro-rapido").forEach(f => f.classList.remove("ativo"));
+  document.getElementById("infoFiltroAplicado").textContent = "";
+  atualizarTabela();
+});
+
 document.querySelectorAll("#tabelaSigad th[data-col]").forEach(th => {
   th.addEventListener("click", () => {
     const col = th.dataset.col;
     if (ordemColuna === col) ordemAsc = !ordemAsc;
     else { ordemColuna = col; ordemAsc = true; }
+    paginaAtual = 1;
     atualizarTabela();
   });
 });
@@ -564,25 +1253,177 @@ function exportarSigadPDF() {
   doc.setFillColor(0,43,92); doc.rect(0,0,297,20,'F');
   doc.setTextColor(255,255,255); doc.setFontSize(18);
   doc.text("CIMAER | Controle de Documentos", 148.5, 14, {align:"center"});
-  const dados = carregarDados(STORAGE_SIGAD).map(d => [d.sigad, d.tipo, isoParaBr(d.data), d.assunto||"", d.prazo?isoParaBr(d.prazo):"", d.situacao==="concluido"?"Concluído":d.situacao==="aguardando"?"Aguardando":"Pendente"]);
-  doc.autoTable({head: [["SIGAD","Tipo","Entrada","Assunto","Prazo","Situação"]], body: dados, startY: 25, theme: 'grid'});
-  doc.save("CIMAER_SIGAD_" + hojeIso() + ".pdf");
+  
+  let dados = carregarDados(STORAGE_SIGAD);
+  
+  const busca = document.getElementById("buscaSigad").value.toLowerCase();
+  if (busca) {
+    dados = dados.filter(d => 
+      d.sigad.toLowerCase().includes(busca) || 
+      (d.assunto || "").toLowerCase().includes(busca)
+    );
+  }
+  
+  const filtroStatus = document.getElementById("filtroStatus").value;
+  const hoje = hojeIso();
+  if (filtroStatus !== "todos") {
+    dados = dados.filter(d => {
+      if (filtroStatus === "pendente") {
+        return d.situacao === "pendente" || !d.situacao;
+      } else if (filtroStatus === "aguardando") {
+        return d.situacao === "aguardando";
+      } else if (filtroStatus === "concluido") {
+        return d.situacao === "concluido";
+      } else if (filtroStatus === "urgentes") {
+        if (!d.prazo) return false;
+        const prazo = new Date(d.prazo);
+        const hojeObj = new Date(hoje);
+        const diffDias = Math.ceil((prazo - hojeObj) / (1000 * 60 * 60 * 24));
+        return (d.prazo < hoje) || (d.prazo === hoje) || (diffDias <= 3 && d.situacao !== "concluido");
+      }
+      return true;
+    });
+  }
+  
+  if (filtroAtivo) {
+    const hojeObj = new Date(hoje);
+    
+    dados = dados.filter(d => {
+      if (!d.prazo) return filtroAtivo === "sem_link" ? !d.link : false;
+      
+      const prazo = new Date(d.prazo);
+      const diffDias = Math.ceil((prazo - hojeObj) / (1000 * 60 * 60 * 24));
+      
+      switch(filtroAtivo) {
+        case "hoje": return d.prazo === hoje;
+        case "semana": return diffDias >= 0 && diffDias <= 7;
+        case "mes": return diffDias >= 0 && diffDias <= 30;
+        case "vencidos": return d.prazo < hoje;
+        case "sem_link": return !d.link;
+        default: return true;
+      }
+    });
+  }
+  
+  const dadosFormatados = dados.map(d => [
+    d.sigad, 
+    d.tipo, 
+    isoParaBr(d.data), 
+    d.assunto||"", 
+    d.prazo?isoParaBr(d.prazo):"", 
+    d.situacao==="concluido"?"Concluído":d.situacao==="aguardando"?"Aguardando":"Pendente"
+  ]);
+  
+  if (filtroStatus !== "todos" || busca || filtroAtivo) {
+    doc.setTextColor(0,43,92);
+    doc.setFontSize(10);
+    let filtroInfo = "Filtro aplicado: ";
+    if (filtroStatus !== "todos") filtroInfo += `Status: ${document.getElementById("filtroStatus").selectedOptions[0].text}`;
+    if (busca && filtroStatus !== "todos") filtroInfo += " | ";
+    if (busca) filtroInfo += `Busca: "${busca}"`;
+    if (filtroAtivo) filtroInfo += ` | Rápido: ${filtroAtivo}`;
+    doc.text(filtroInfo, 10, 28);
+  }
+  
+  doc.autoTable({
+    head: [["SIGAD","Tipo","Entrada","Assunto","Prazo","Situação"]], 
+    body: dadosFormatados, 
+    startY: (filtroStatus !== "todos" || busca || filtroAtivo) ? 35 : 25,
+    theme: 'grid'
+  });
+  
+  let nomeArquivo = `CIMAER_SIGAD_`;
+  if (filtroStatus !== "todos") nomeArquivo += filtroStatus + "_";
+  if (filtroAtivo) nomeArquivo += filtroAtivo + "_";
+  nomeArquivo += hojeIso() + ".pdf";
+  
+  doc.save(nomeArquivo);
 }
 
 function exportarSigadExcel() {
-  const dados = carregarDados(STORAGE_SIGAD).map(d => ({SIGAD:d.sigad,Tipo:d.tipo,Entrada:isoParaBr(d.data),Assunto:d.assunto||"",Prazo:d.prazo?isoParaBr(d.prazo):"",Situacao:d.situacao==="concluido"?"Concluído":d.situacao==="aguardando"?"Aguardando":"Pendente"}));
-  const ws = XLSX.utils.json_to_sheet(dados);
-  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "SIGAD");
-  XLSX.writeFile(wb, "CIMAER_SIGAD_" + hojeIso() + ".xlsx");
+  let dados = carregarDados(STORAGE_SIGAD);
+  
+  const busca = document.getElementById("buscaSigad").value.toLowerCase();
+  if (busca) {
+    dados = dados.filter(d => 
+      d.sigad.toLowerCase().includes(busca) || 
+      (d.assunto || "").toLowerCase().includes(busca)
+    );
+  }
+  
+  const filtroStatus = document.getElementById("filtroStatus").value;
+  const hoje = hojeIso();
+  if (filtroStatus !== "todos") {
+    dados = dados.filter(d => {
+      if (filtroStatus === "pendente") {
+        return d.situacao === "pendente" || !d.situacao;
+      } else if (filtroStatus === "aguardando") {
+        return d.situacao === "aguardando";
+      } else if (filtroStatus === "concluido") {
+        return d.situacao === "concluido";
+      } else if (filtroStatus === "urgentes") {
+        if (!d.prazo) return false;
+        const prazo = new Date(d.prazo);
+        const hojeObj = new Date(hoje);
+        const diffDias = Math.ceil((prazo - hojeObj) / (1000 * 60 * 60 * 24));
+        return (d.prazo < hoje) || (d.prazo === hoje) || (diffDias <= 3 && d.situacao !== "concluido");
+      }
+      return true;
+    });
+  }
+  
+  if (filtroAtivo) {
+    const hojeObj = new Date(hoje);
+    
+    dados = dados.filter(d => {
+      if (!d.prazo) return filtroAtivo === "sem_link" ? !d.link : false;
+      
+      const prazo = new Date(d.prazo);
+      const diffDias = Math.ceil((prazo - hojeObj) / (1000 * 60 * 60 * 24));
+      
+      switch(filtroAtivo) {
+        case "hoje": return d.prazo === hoje;
+        case "semana": return diffDias >= 0 && diffDias <= 7;
+        case "mes": return diffDias >= 0 && diffDias <= 30;
+        case "vencidos": return d.prazo < hoje;
+        case "sem_link": return !d.link;
+        default: return true;
+      }
+    });
+  }
+  
+  const dadosFormatados = dados.map(d => ({
+    SIGAD: d.sigad,
+    Tipo: d.tipo,
+    Entrada: isoParaBr(d.data),
+    Assunto: d.assunto||"",
+    Prazo: d.prazo?isoParaBr(d.prazo):"",
+    Situacao: d.situacao==="concluido"?"Concluído":d.situacao==="aguardando"?"Aguardando":"Pendente"
+  }));
+  
+  const ws = XLSX.utils.json_to_sheet(dadosFormatados);
+  const wb = XLSX.utils.book_new(); 
+  XLSX.utils.book_append_sheet(wb, ws, "SIGAD");
+  
+  let nomeArquivo = `CIMAER_SIGAD_`;
+  if (filtroStatus !== "todos") nomeArquivo += filtroStatus + "_";
+  if (filtroAtivo) nomeArquivo += filtroAtivo + "_";
+  nomeArquivo += hojeIso() + ".xlsx";
+  
+  XLSX.writeFile(wb, nomeArquivo);
 }
 
 /* BACKUP */
 function backupDados() {
-  const dados = {sigad: carregarDados(STORAGE_SIGAD), eventos: carregarDados(STORAGE_EVENTOS)};
+  const dados = {
+    sigad: carregarDados(STORAGE_SIGAD), 
+    eventos: carregarDados(STORAGE_EVENTOS),
+    filtros: carregarDados(STORAGE_FILTROS)
+  };
   const blob = new Blob([JSON.stringify(dados, null, 2)], {type: "application/json"});
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a"); a.href = url; a.download = "cimaer_backup_" + hojeIso() + ".json"; a.click();
-  URL.revokeОбъектURL(url);
+  URL.revokeObjectURL(url);
 }
 function restaurarDados(e) {
   const file = e.target.files[0];
@@ -593,6 +1434,7 @@ function restaurarDados(e) {
       const data = JSON.parse(ev.target.result);
       localStorage.setItem(STORAGE_SIGAD, JSON.stringify(data.sigad || []));
       localStorage.setItem(STORAGE_EVENTOS, JSON.stringify(data.eventos || []));
+      localStorage.setItem(STORAGE_FILTROS, JSON.stringify(data.filtros || []));
       alert("Backup restaurado com sucesso! Página será recarregada.");
       location.reload();
     } catch { alert("Arquivo inválido."); }
@@ -602,6 +1444,10 @@ function restaurarDados(e) {
 
 /* INICIA */
 atualizarTabela();
+atualizarListaFiltros();
+
+// Verificar alerta de backup após a página carregar
+setTimeout(verificarAlertaBackup, 1000);
 </script>
 </body>
 </html>
